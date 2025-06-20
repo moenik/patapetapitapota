@@ -66,7 +66,7 @@ public class Bot extends JDialog implements Runnable{
 	private int step = 0;
 	private void move() {
 		if(this.to == null) return;
-		if(to.getX()!= this.getLocation().getX()) {
+		if(to.getX() != this.getLocation().getX()) {
 			if(to.getX() < this.getLocation().getX()) {
 				this.setLocation((int)this.getLocation().getX()-this.velocity, (int)this.getLocation().getY());
 				switch(step) {
@@ -85,7 +85,7 @@ public class Bot extends JDialog implements Runnable{
 			if(Math.abs(to.getX() - this.getLocation().getX()) < this.velocity) {
 				this.setLocation((int)to.getX(), (int)this.getLocation().getY());
 			}
-		}else if(to.getY()!= this.getLocation().getY()) {
+		}else if(to.getY() != this.getLocation().getY()) {
 			if(to.getY() < this.getLocation().getY()) {
 				this.setLocation((int)this.getLocation().getX(), (int)this.getLocation().getY()-this.velocity);
 				switch(step) {
@@ -109,35 +109,57 @@ public class Bot extends JDialog implements Runnable{
 			this.to = null; // reached destination
 		}
 	}
+	
 	private void walkTo(Point location) {
 		this.to = location;			
-		if(to == null ) return;
-		
-	}
+		if(to == null ) return;		
+	}	
 	
-	
+	private String action = "IDLE"; // IDLE, WALKING
 	@Override
 	public void run() {
 		
 		int cyclesFor1s = (int)1000 / this.updateFrequency; // how many cycles for 1 second
-		int cyclesCount = cyclesFor1s;
+		int idleCycles  = 0;
+		Random random = new Random();
 		while(this.alive) {
-			try {
-				
-				if(this.to == null && cyclesCount<=0) {
-					Random random = new Random();
+			
+			switch (action) {
+			case "WALKING":
+				move();
+				if(this.to == null) {
+					this.action = "IDLE"; // switch to idle when reached destination
+				}
+				break;
+			case "DECIDE":
+				//do a random thing
+				switch (random.nextInt(1)) {
+				case 0: // walk to a random position
 					Dimension dimension = MouseAndDisplay.getScreenSize();
 			        int x = random.nextInt(dimension.width-32); // Random x within width
 			        int y = random.nextInt(dimension.height-32); // Random y within height
-			        
+			  		this.action = "WALKING";
 					this.walkTo(new Point(x, y));
-					cyclesCount = cyclesFor1s * (random.nextInt(3) + 1); // random between 1 and 3 seconds
-				}else if(this.to == null){
-					cyclesCount--;
+					break;
+				default:
+					break;
 				}
-				move();
+				break;
+			case "IDLE":
+				if(idleCycles<=0) {
+					idleCycles = cyclesFor1s * (random.nextInt(5) + 5); // random between 5 and 10 seconds
+					this.action = "DECIDE"; // switch to decide action
+				}else{ // just count down for n time
+					idleCycles--;
+				}				
+				break;
+			default:
+				this.action = "IDLE";
+				break;
+			}
+			
+			try {
 				Thread.sleep(this.updateFrequency);
-				
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
