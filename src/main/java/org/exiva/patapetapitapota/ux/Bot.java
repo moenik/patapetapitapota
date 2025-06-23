@@ -53,6 +53,8 @@ public class Bot extends JDialog implements Runnable{
 	private static final ImageIcon imgWE3 = new ImageIcon(Main.class.getResource("/org/exiva/patapetapitapota/resources/images/chicken_eat_W3.png"));
 	private static final ImageIcon imgWE4 = new ImageIcon(Main.class.getResource("/org/exiva/patapetapitapota/resources/images/chicken_eat_W4.png"));
 	
+	private static final ImageIcon imgSL2 = new ImageIcon(Main.class.getResource("/org/exiva/patapetapitapota/resources/images/chicken_sit_S2.png"));
+	
 	
 	private boolean alive;
 	private JLabel lblImg;
@@ -84,6 +86,18 @@ public class Bot extends JDialog implements Runnable{
 	}
 	
 	private int step = 0;
+	private int layEgg() {
+		if(step == 0) {
+			this.updateImage(imgSL2); // sitting down
+		}
+		step++;
+		if(step > 19) {
+			this.step = 0; // reset step
+			new Item("EGG", new Point((int)this.getLocation().getX()+11, (int)this.getLocation().getY()+20)); // create egg item
+		}
+		return step;
+	}
+	
 	private int eatCounter = 0; // counter for eating animation
 	private int eatDirection = 0; // 0 = E, 1 = W, 2 = N, 3 = S
 	private int eat() {
@@ -193,12 +207,15 @@ public class Bot extends JDialog implements Runnable{
 				move();
 				if(this.to == null)  this.action = "IDLE"; 
 				break;
+			case "LAYING_EGG":
+				if(layEgg()==0) this.action = "IDLE";
+				break;
 			case "EATING":
 				if(eat()==0) this.action = "IDLE"; 
 				break;
 			case "DECIDE":
 				//do a random thing
-				switch (random.nextInt(2)) {
+				switch (random.nextInt(3)) {
 				case 0: // walk to a random position
 					Dimension dimension = MouseAndDisplay.getScreenSize();
 			        int x = random.nextInt(dimension.width-32); // Random x within width
@@ -211,7 +228,10 @@ public class Bot extends JDialog implements Runnable{
 					this.action = "EATING";
 					this.step = 0; // reset step for eating animation
 					break;
+				case 2: // lay egg 
 				default:
+					this.action = "LAYING_EGG";
+					this.step = 0; // reset step for laying egg animation
 					break;
 				}
 				break;
