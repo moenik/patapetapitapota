@@ -93,7 +93,19 @@ public class Bot extends JDialog implements Runnable{
 		step++;
 		if(step > 19) {
 			this.step = 0; // reset step
-			new Item("EGG", new Point((int)this.getLocation().getX()+11, (int)this.getLocation().getY()+20)); // create egg item
+			new Item("EGG", new Point((int)this.getLocation().getX()+11, (int)this.getLocation().getY()+20),120000); // create egg item
+		}
+		return step;
+	}
+	
+	private int poop() {
+		if(step == 0) {
+			this.updateImage(imgSL2); // sitting down
+		}
+		step++;
+		if(step > 5) {
+			this.step = 0; // reset step
+			new Item("POOP", new Point((int)this.getLocation().getX()+11, (int)this.getLocation().getY()+21),120000); // create poop item
 		}
 		return step;
 	}
@@ -210,18 +222,25 @@ public class Bot extends JDialog implements Runnable{
 			case "LAYING_EGG":
 				if(layEgg()==0) this.action = "IDLE";
 				break;
+			case "POOPING":
+				if(poop()==0) this.action = "WALK";
+				break;
 			case "EATING":
 				if(eat()==0) this.action = "IDLE"; 
 				break;
+			case "WALK":
+				Dimension dimension = MouseAndDisplay.getScreenSize();
+		        int x = random.nextInt(dimension.width-32); // Random x within width
+		        int y = random.nextInt(dimension.height-32); // Random y within height
+		  		this.action = "WALKING";
+				this.walkTo(new Point(x, y));
+				break;
 			case "DECIDE":
 				//do a random thing
-				switch (random.nextInt(3)) {
+				switch (random.nextInt(4)) {
+				//switch (2) {
 				case 0: // walk to a random position
-					Dimension dimension = MouseAndDisplay.getScreenSize();
-			        int x = random.nextInt(dimension.width-32); // Random x within width
-			        int y = random.nextInt(dimension.height-32); // Random y within height
-			  		this.action = "WALKING";
-					this.walkTo(new Point(x, y));
+			  		this.action = "WALK";
 					break;
 				case 1: // eat
 					this.eatCounter = random.nextInt(4) + 1; // random between 1 and 4 eating cycles
@@ -229,16 +248,20 @@ public class Bot extends JDialog implements Runnable{
 					this.step = 0; // reset step for eating animation
 					break;
 				case 2: // lay egg 
-				default:
 					this.action = "LAYING_EGG";
 					this.step = 0; // reset step for laying egg animation
+					break;
+				case 3: // poop 
+				default:
+					this.action = "POOPING";
+					this.step = 0; // reset step for poop animation
 					break;
 				}
 				break;
 			case "IDLE":
 				this.updateImage(imgS2);
 				if(idleCycles<=0) {
-					idleCycles = cyclesFor1s * (random.nextInt(5) + 5); // random between 5 and 10 seconds
+					idleCycles = cyclesFor1s * (random.nextInt(6) + 5); // random between 5 and 10 seconds
 					this.action = "DECIDE"; // switch to decide action
 				}else{ // just count down for n time
 					idleCycles--;
