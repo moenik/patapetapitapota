@@ -212,15 +212,29 @@ public class Bot extends JDialog implements Runnable{
 		int cyclesFor1s = (int) 1000 / this.updateFrequency; // how many cycles for 1 second
 		int idleCycles  = 0;
 		Random random = new Random();
+		Point lastMousePos = MouseAndDisplay.getMousePosition();
+		int mouseCycles = 0; // how many cycles since last mouse position change
 		while(this.alive) {
 			//System.out.println(action);
+			if(lastMousePos.equals(MouseAndDisplay.getMousePosition())) {
+				mouseCycles++;
+			} else {
+				mouseCycles = 0; // reset mouse cycles if mouse position changed
+				lastMousePos = MouseAndDisplay.getMousePosition();				
+			}
+			//System.out.println(action + " - mouse cycles: " + mouseCycles);
 			switch (action) {
 			case "WALKING":
+			case "GETING_MOUSE":
+			case "MOVE_MOUSE":
 				move();
-				if(this.to == null)  this.action = "IDLE"; 
+				if(this.action.equals("MOVE_MOUSE")) {
+					MouseAndDisplay.setMousePosition(this.getLocation());
+				}
+				if(this.to == null) {  this.action = this.action.equals("GETING_MOUSE")?"SET_MOVE_MOUSE":"IDLE";} 
 				break;
 			case "LAYING_EGG":
-				if(layEgg()==0) this.action = "IDLE";
+				if(layEgg()==0) this.action = "WALK";
 				break;
 			case "POOPING":
 				if(poop()==0) this.action = "WALK";
@@ -229,11 +243,16 @@ public class Bot extends JDialog implements Runnable{
 				if(eat()==0) this.action = "IDLE"; 
 				break;
 			case "WALK":
+			case "SET_MOVE_MOUSE":
 				Dimension dimension = MouseAndDisplay.getScreenSize();
 		        int x = random.nextInt(dimension.width-32); // Random x within width
 		        int y = random.nextInt(dimension.height-32); // Random y within height
-		  		this.action = "WALKING";
+		  		this.action = this.action.equals("WALK")?"WALKING":"MOVE_MOUSE";
 				this.walkTo(new Point(x, y));
+				break;
+			case "GET_MOUSE":
+				this.action = "GETING_MOUSE"; // walk to mouse position
+				this.walkTo(MouseAndDisplay.getMousePosition());
 				break;
 			case "DECIDE":
 				//do a random thing
@@ -263,6 +282,11 @@ public class Bot extends JDialog implements Runnable{
 				if(idleCycles<=0) {
 					idleCycles = cyclesFor1s * (random.nextInt(6) + 5); // random between 5 and 10 seconds
 					this.action = "DECIDE"; // switch to decide action
+					if(mouseCycles > cyclesFor1s * 60 * 3) { // if mouse not moved for 3min, walk to mouse position
+						this.action = "GET_MOUSE";
+						mouseCycles = 0; // reset mouse cycles
+						//System.out.println("GET_MOUSE");
+					}
 				}else{ // just count down for n time
 					idleCycles--;
 				}				
